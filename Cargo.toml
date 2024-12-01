@@ -1,0 +1,8 @@
+[package]
+name = "IoT-dashboard-rs"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tokio = { version = "1.36", features = ["sync"] }
+rumqttc = "0.17.0"
