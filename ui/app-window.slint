@@ -2,17 +2,13 @@ import { Button, VerticalBox } from "std-widgets.slint";
 
 export component AppWindow inherits Window {
     in-out property <int> counter: 42;
-    callback request-increase-value();
+    in property <string> fetched_data: "Waiting for temperature data..";
     VerticalBox {
         Text {
-            property <string> fetched_data: "Waiting for temperature data..";
-        }
-
-        Button {
-            text: "Increase value";
-            clicked => {
-                root.request-increase-value();
-            }
+            text: fetched_data; // Bind the text to the property
+            horizontal-alignment: center;
+            vertical-alignment: center;
+            font-size: 18px;
         }
     }
 }

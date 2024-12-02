@@ -11,13 +11,6 @@ slint::include_modules!();
 async fn main() -> Result<(), Box<dyn Error>> {
     
     let ui = AppWindow::new()?;
-    ui.on_request_increase_value({
-        let ui_handle = ui.as_weak();
-        move || {
-            let ui = ui_handle.unwrap();
-            ui.set_counter(ui.get_counter() + 1);
-        }
-    });
     ui.run()?;
 
     // Initialize MQTT client
@@ -49,7 +42,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // Main thread processing received messages
     while let Some(msg) = rx.recv().await {
         println!("Received message - Topic:{} - Message: {}", msg.0, msg.1);
-        ui.set_fetched_data(format!("{}",msg.1));
+        ui.set_fetched_data(format!("{}",msg.1).into());
     }
 
     Ok(())
