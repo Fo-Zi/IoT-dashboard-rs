@@ -3,8 +3,23 @@ use std::error::Error;
 use std::time::Duration;
 use tokio::{sync::mpsc, task};
 
+#[cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
+slint::include_modules!();
+
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<(), Box<dyn Error>> {
+    
+    let ui = AppWindow::new()?;
+    ui.on_request_increase_value({
+        let ui_handle = ui.as_weak();
+        move || {
+            let ui = ui_handle.unwrap();
+            ui.set_counter(ui.get_counter() + 1);
+        }
+    });
+    ui.run()?;
+
     // Initialize MQTT client
     let mut mqttoptions = MqttOptions::new("test-1", "localhost", 1883);
     mqttoptions.set_keep_alive(Duration::from_secs(5));
@@ -37,4 +52,5 @@ async fn main() -> Result<(), Box<dyn Error>> {
     }
 
     Ok(())
+
 }
