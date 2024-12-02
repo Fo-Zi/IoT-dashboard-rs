@@ -53,4 +53,5 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // Run the UI in the main thread
     ui.run()?;
     Ok(())
+
 }

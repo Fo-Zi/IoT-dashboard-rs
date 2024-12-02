@@ -1,14 +1,148 @@
 import { Button, VerticalBox } from "std-widgets.slint";
 
+import { Palette } from "std-widgets.slint";
+
+struct Palette  {
+    menuBar : brush,
+    mainContent : brush,
+    box : brush,
+    lightDisplay : brush,
+    pieChart : brush,
+    roundButton : brush,
+    weekdayBox : brush,
+    text : brush,
+    shadow : brush,
+}
+
+global Skin  {
+    in property <bool> day: Palette.color-scheme != ColorScheme.dark;
+    out property <Palette> palette : root.day ? {
+       menuBar : #6D7BFB,
+       mainContent :  #fbfbfb,
+       box :   #ffffff,
+       lightDisplay : #ffffff,
+       pieChart : #ffffff,
+       roundButton : #f7f7f7,
+       weekdayBox : #f4f4f4,
+       text : #000,
+       shadow : #0001, // ### added alpha
+    } : {
+       menuBar : #2937A7,
+       mainContent : #040404,
+       box : #000000,
+       lightDisplay : #000000,
+       pieChart : #000000,
+       roundButton : #0a0a0a,
+       weekdayBox : #0c0c0c,
+       text : #fff,
+       shadow : #fff1, // ### added alpha
+    };
+
+    // From Skin::initHints in Skin.cpp
+    out property <length> DefaultFont: 12px;
+    out property <length> TinyFont: 9px;
+    out property <length> SmallFont: 10px;
+    out property <length> MediumFont: 13px;
+    out property <length> LargeFont: 20px;
+    out property <length> HugeFont: 27px; // (also, bold)
+    out property <length> TitleFont: 10px; // (also, bold)
+}
+
+// From RoundedIcon.cpp
+component RoundedIcon inherits Rectangle {
+    in property <bool> isBright;
+    in property <bool> isSmall;
+    in property <image> iconName <=> m-graphicLabel.source;
+    in property <float> background-opacity <=> background-fill.opacity;
+
+    height: root.isSmall ? 60px : 68px;
+    width: root.isSmall ? 60px : 68px;
+
+    background-fill := Rectangle {
+        background: root.isBright ? @linear-gradient(180deg, #ff7d34, #ff3122) : @linear-gradient(180deg, #6776FF, #6100FF);
+        border-radius: 6px;
+        opacity: 1.0;
+    }
+
+    m-graphicLabel := Image {
+        x: (parent.width - self.width) / 2;
+        y: (parent.height - self.height) / 2;
+    }
+}
+component BoxBase inherits Rectangle {
+    background: Skin.palette.box;
+    drop-shadow-offset-x: 6px;
+    drop-shadow-offset-y: 6px;
+    drop-shadow-blur: 6px;
+    drop-shadow-color: Skin.palette.shadow;
+}
+
+component Box inherits BoxBase {
+    in property <string> title;
+
+    VerticalLayout {
+        if (root.title != "") : Text {
+            text <=> root.title;
+            font-size: Skin.TitleFont;
+            font-weight: 700;
+        }
+        spacing: 10px;
+        padding: 15px;
+
+        @children
+    }
+}
+component TitleAndValueBox inherits VerticalLayout {
+    padding: 8px;
+    spacing: 8px;
+    horizontal-stretch: 100;
+}
+component BoxWithIconAndText inherits Box {
+    in property <image> iconFile <=> ri.iconName; //### in original, this is derived from title
+    in property <bool> isBright <=> ri.isBright;
+    in property <string> title- <=> titleLabel.text;
+    in-out property <string> value: "";
+
+    HorizontalLayout {
+        spacing: 20px;
+        ri := RoundedIcon { }
+        TitleAndValueBox {
+            titleLabel := Text {
+                font-size: Skin.TitleFont;
+                font-weight: 700;
+            }
+            val := Text {
+                text <=> root.value;
+                font-size: Skin.LargeFont;
+                font-weight: 700;
+            }
+        }
+    }
+}
+
+component IndoorTemperature inherits BoxWithIconAndText{
+    in-out property <string> temperature: "24";
+
+    title: "Indoor Temperature";
+    iconFile: @image-url("images/indoor-temperature.png");
+    value: (root.temperature < 0 ? "" : "+") + root.temperature;
+    isBright: true;
+}
+
 export component AppWindow inherits Window {
     in-out property <int> counter: 42;
     in property <string> fetched_data: "Waiting for temperature data..";
     VerticalBox {
-        Text {
-            text: fetched_data; // Bind the text to the property
-            horizontal-alignment: center;
-            vertical-alignment: center;
-            font-size: 18px;
+        //Text {
+        //    text: fetched_data; // Bind the text to the property
+        //    horizontal-alignment: center;
+        //    vertical-alignment: center;
+        //    font-size: 18px;
+        //}
+
+        // Add IndoorTemperature component
+        IndoorTemperature {
+            temperature: fetched_data;  // You can bind it to real temperature data here
         }
     }
 }
