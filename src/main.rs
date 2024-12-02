@@ -7,11 +7,10 @@ use tokio::{sync::mpsc, task};
 
 slint::include_modules!();
 
-#[tokio::main(flavor = "current_thread")]
+#[tokio::main(flavor = "multi_thread", worker_threads = 4)]
 async fn main() -> Result<(), Box<dyn Error>> {
-    
+    // Initialize the UI
     let ui = AppWindow::new()?;
-    ui.run()?;
 
     // Initialize MQTT client
     let mut mqttoptions = MqttOptions::new("test-1", "localhost", 1883);
@@ -26,25 +25,32 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // Create a channel to transfer messages between threads
     let (tx, mut rx) = mpsc::channel(100);
 
-    // Spawn a task to handle message receiving
+    // Spawn a task to handle MQTT message receiving
     task::spawn(async move {
         while let Ok(event) = eventloop.poll().await {
             if let Event::Incoming(Packet::Publish(publish)) = event {
                 let message = String::from_utf8_lossy(&publish.payload).to_string();
-                if (tx.send((publish.topic.clone(), message)).await).is_err() {
+                if tx.send((publish.topic.clone(), message)).await.is_err() {
                     println!("Receiver dropped. Exiting message handler.");
                     break;
                 }
             }
         }
     });
+     // now forward the data to the main thread using invoke_from_event_loop
+    
+    // Main thread processing received messages and updating the UI
+    let ui_handle = ui.as_weak();
+    task::spawn(async move {
+        while let Some(msg) = rx.recv().await {
+            println!("Received message - Topic:{} - Message: {}", msg.0, msg.1);
+            let message = msg.1.clone();
+            let handle_copy = ui_handle.clone();
+            slint::invoke_from_event_loop(move || handle_copy.unwrap().set_fetched_data(message.into()));
+        }
+    });
 
-    // Main thread processing received messages
-    while let Some(msg) = rx.recv().await {
-        println!("Received message - Topic:{} - Message: {}", msg.0, msg.1);
-        ui.set_fetched_data(format!("{}",msg.1).into());
-    }
-
+    // Run the UI in the main thread
+    ui.run()?;
     Ok(())
-
 }
