@@ -49,6 +49,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // Main thread processing received messages
     while let Some(msg) = rx.recv().await {
         println!("Received message - Topic:{} - Message: {}", msg.0, msg.1);
+        ui.set_fetched_data(format!("{}",msg.1));
     }
 
     Ok(())
