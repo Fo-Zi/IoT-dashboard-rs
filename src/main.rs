@@ -18,7 +18,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let (client, mut eventloop) = AsyncClient::new(mqttoptions, 10);
     client
-        .subscribe("test/topic", QoS::AtMostOnce)
+        .subscribe("iot_test", QoS::AtMostOnce)
         .await
         .unwrap();
 
@@ -46,7 +46,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             println!("Received message - Topic:{} - Message: {}", msg.0, msg.1);
             let message = msg.1.clone();
             let handle_copy = ui_handle.clone();
-            slint::invoke_from_event_loop(move || handle_copy.unwrap().set_fetched_data(message.into()));
+            slint::invoke_from_event_loop(move || handle_copy.unwrap().set_temperature_display(message.into()));
         }
     });
 

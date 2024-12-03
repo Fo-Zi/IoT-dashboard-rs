@@ -1,52 +1,4 @@
-import { Button, VerticalBox } from "std-widgets.slint";
-
-import { Palette } from "std-widgets.slint";
-
-struct Palette  {
-    menuBar : brush,
-    mainContent : brush,
-    box : brush,
-    lightDisplay : brush,
-    pieChart : brush,
-    roundButton : brush,
-    weekdayBox : brush,
-    text : brush,
-    shadow : brush,
-}
-
-global Skin  {
-    in property <bool> day: Palette.color-scheme != ColorScheme.dark;
-    out property <Palette> palette : root.day ? {
-       menuBar : #6D7BFB,
-       mainContent :  #fbfbfb,
-       box :   #ffffff,
-       lightDisplay : #ffffff,
-       pieChart : #ffffff,
-       roundButton : #f7f7f7,
-       weekdayBox : #f4f4f4,
-       text : #000,
-       shadow : #0001, // ### added alpha
-    } : {
-       menuBar : #2937A7,
-       mainContent : #040404,
-       box : #000000,
-       lightDisplay : #000000,
-       pieChart : #000000,
-       roundButton : #0a0a0a,
-       weekdayBox : #0c0c0c,
-       text : #fff,
-       shadow : #fff1, // ### added alpha
-    };
-
-    // From Skin::initHints in Skin.cpp
-    out property <length> DefaultFont: 12px;
-    out property <length> TinyFont: 9px;
-    out property <length> SmallFont: 10px;
-    out property <length> MediumFont: 13px;
-    out property <length> LargeFont: 20px;
-    out property <length> HugeFont: 27px; // (also, bold)
-    out property <length> TitleFont: 10px; // (also, bold)
-}
+import { HorizontalBox, VerticalBox, GridBox, Button } from "std-widgets.slint";
 
 // From RoundedIcon.cpp
 component RoundedIcon inherits Rectangle {
@@ -54,13 +6,18 @@ component RoundedIcon inherits Rectangle {
     in property <bool> isSmall;
     in property <image> iconName <=> m-graphicLabel.source;
     in property <float> background-opacity <=> background-fill.opacity;
+    in property <color> gradient_color_1 : #ec655b;
+    in property <color> gradient_color_2 : #db4b08;
+    in property <color> gradient_color_3 : #7d88f0;
+    in property <color> gradient_color_4 : #4601b4;
 
     height: root.isSmall ? 60px : 68px;
     width: root.isSmall ? 60px : 68px;
 
     background-fill := Rectangle {
-        background: root.isBright ? @linear-gradient(180deg, #ff7d34, #ff3122) : @linear-gradient(180deg, #6776FF, #6100FF);
+        background: root.isBright ? @linear-gradient(135deg, gradient_color_1, gradient_color_2) : @linear-gradient(135deg, gradient_color_3, gradient_color_4);
         border-radius: 6px;
+        drop-shadow-offset-y: 0mm;
         opacity: 1.0;
     }
 
@@ -69,80 +26,130 @@ component RoundedIcon inherits Rectangle {
         y: (parent.height - self.height) / 2;
     }
 }
-component BoxBase inherits Rectangle {
-    background: Skin.palette.box;
-    drop-shadow-offset-x: 6px;
-    drop-shadow-offset-y: 6px;
-    drop-shadow-blur: 6px;
-    drop-shadow-color: Skin.palette.shadow;
-}
 
-component Box inherits BoxBase {
-    in property <string> title;
-
-    VerticalLayout {
-        if (root.title != "") : Text {
-            text <=> root.title;
-            font-size: Skin.TitleFont;
-            font-weight: 700;
+component TemperatureWidget inherits Rectangle{
+    in property <string> temp_display: "Waiting for data..";
+    HorizontalBox {
+        RoundedIcon {
+            isBright: true;
+            isSmall: false;
+            iconName: @image-url("images/temperature.png") ; // Placeholder image path
         }
-        spacing: 10px;
-        padding: 15px;
-
-        @children
-    }
-}
-component TitleAndValueBox inherits VerticalLayout {
-    padding: 8px;
-    spacing: 8px;
-    horizontal-stretch: 100;
-}
-component BoxWithIconAndText inherits Box {
-    in property <image> iconFile <=> ri.iconName; //### in original, this is derived from title
-    in property <bool> isBright <=> ri.isBright;
-    in property <string> title- <=> titleLabel.text;
-    in-out property <string> value: "";
-
-    HorizontalLayout {
-        spacing: 20px;
-        ri := RoundedIcon { }
-        TitleAndValueBox {
-            titleLabel := Text {
-                font-size: Skin.TitleFont;
-                font-weight: 700;
-            }
-            val := Text {
-                text <=> root.value;
-                font-size: Skin.LargeFont;
-                font-weight: 700;
-            }
+        Text {
+            vertical-alignment: center;
+            font-size: 13px;
+            text: root.temp_display;  // Bind the text property to the displayedText property
         }
     }
 }
 
-component IndoorTemperature inherits BoxWithIconAndText{
-    in-out property <string> temperature: "24";
-
-    title: "Indoor Temperature";
-    iconFile: @image-url("images/indoor-temperature.png");
-    value: (root.temperature < 0 ? "" : "+") + root.temperature;
-    isBright: true;
+component HumidityWidget inherits Rectangle{
+    in property <string> humidity_display: "Waiting for data..";
+    HorizontalBox {
+        RoundedIcon {
+            isBright: false;
+            isSmall: false;
+            gradient_color_3 : #289ee2;
+            gradient_color_4 : #076ca7;
+            iconName: @image-url("images/humidity.png") ; // Placeholder image path
+        }
+        Text {
+            vertical-alignment: center;
+            font-size: 13px;
+            text: root.humidity_display;  // Bind the text property to the displayedText property
+        }
+    }
 }
-
+component PressureWidget inherits Rectangle{
+    in property <string> pressure_display: "Waiting for data..";
+    HorizontalBox {
+        RoundedIcon {
+            isBright: false;
+            isSmall: false;
+            gradient_color_3 : #54c7a4;
+            gradient_color_4 : #068f5a;
+            iconName: @image-url("images/pressure.png") ; // Placeholder image path
+        }
+        Text {
+            vertical-alignment: center;
+            font-size: 13px;
+            text: root.pressure_display;  // Bind the text property to the displayedText property
+        }
+    }
+}
+component WindWidget inherits Rectangle{
+    in property <string> wind_display: "Waiting for data..";
+    HorizontalBox {
+        RoundedIcon {
+            isBright: true;
+            isSmall: false;
+            gradient_color_1 : #a1cbe4;
+            gradient_color_2 : #5d86c4;
+            iconName: @image-url("images/wind.png") ; // Placeholder image path
+        }
+        Text {
+            vertical-alignment: center;
+            font-size: 13px;
+            text: root.wind_display;  // Bind the text property to the displayedText property
+        }
+    }
+}
 export component AppWindow inherits Window {
-    in-out property <int> counter: 42;
-    in property <string> fetched_data: "Waiting for temperature data..";
-    VerticalBox {
-        //Text {
-        //    text: fetched_data; // Bind the text to the property
-        //    horizontal-alignment: center;
-        //    vertical-alignment: center;
-        //    font-size: 18px;
-        //}
 
-        // Add IndoorTemperature component
-        IndoorTemperature {
-            temperature: fetched_data;  // You can bind it to real temperature data here
+    in property <string> pressure_display: "Waiting for data..";
+    in property <string> temperature_display: "Waiting for data..";
+    in property <string> wind_display: "Waiting for data..";
+    in property <string> humidity_display: "Waiting for data..";
+    HorizontalBox {
+        alignment: LayoutAlignment.stretch;
+        // Sidebar
+        Rectangle {
+            width: 150px;
+            background: #333; // Dark gray background for the sidebar
+            VerticalBox {
+                spacing: 10px;
+                padding: 20px;
+                    //model: ["Dashboard", "Settings", "Help", "Exit"]; // List of buttons
+                    Button {
+                        text: "Dashboard";
+                        height: 40px;
+                    }
+                    Button {
+                        text: "Settings";
+                        height: 40px;
+                    }
+                    Button {
+                        text: "Help";
+                        height: 40px;
+                    }
+                    Button {
+                        text: "Exit";
+                        height: 40px;
+                    }
+            } 
+        }
+
+        // Main content: Grid layout for icons
+        GridBox {
+            spacing: 20px;
+            padding: 20px;
+
+            Row{
+                TemperatureWidget {
+                    temp_display: temperature_display;
+                }
+                HumidityWidget {
+                    humidity_display: humidity_display;
+                }
+            }
+            Row{
+                PressureWidget {
+                    pressure_display: pressure_display;
+                }
+                WindWidget {
+                    wind_display: wind_display;
+                }
+            }
         }
     }
 }
